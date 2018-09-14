@@ -35,8 +35,8 @@ def check_upstream(package):
         # to complicated regex here, just split -
         upstream_url = category_match.group(1).strip()
         # print('source0 is: {}'.format(upstream_url))
-        if "github|gitlab"  in str(upstream_url):
-            # split url and rejoin
+        rgx = re.compile(r'git[hl]')
+        if rgx.search(upstream_url):
             split_url = upstream_url.split("/")[:-2]
             basename = '/'.join(split_url[:3]) + '/'
             project_name = '/'.join(split_url[:5]) + '/'
@@ -62,7 +62,7 @@ def compare_versions(package):
         print("OpenMandriva version of [{0}] is same [{1}] as in upstream [{2}]".format(package, our_ver, they_ver))
     elif sorted(set(str(our_ver))) < sorted(set(str(they_ver))):
         print("OpenMandriva version of [{0}] is lower [{1}] than in upstream [{2}]".format(package, our_ver, they_ver))
-    else:
+    elif sorted(set(str(our_ver))) > sorted(set(str(they_ver))):
         print("OpenMandriva version of [{0}] is newer [{1}] than in upstream [{2}]".format(package, our_ver, they_ver))
 
 
