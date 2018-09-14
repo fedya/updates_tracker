@@ -22,7 +22,6 @@ def check_version(package):
         version = category_match.group(1).strip()
         package_status = {'oma_pkg_ver': '%s' % (str(version)),
                           'package': '%s' % (str(package))}
-#        print(package_status)
         print('current version is: [{}]'.format(version))
         return version
 
@@ -41,14 +40,16 @@ def check_upstream(package):
             split_url = upstream_url.split("/")[:-2]
             basename = '/'.join(split_url[:3]) + '/'
             project_name = '/'.join(split_url[:5]) + '/'
-            print(project_name)
             cmd = 'git ls-remote --tags --refs %s' % (project_name)
-            print(cmd)
             proc = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout_list = proc.communicate()[0]
-            category_match = re.search("(?!.*/)(?!v)(?!.*-)[0-9a-zA-Z.]*$", stdout_list.decode('utf-8'))
-            obtained_ver = category_match.group(0)
-            print(obtained_ver)
+            version_list = []
+            #category_match = re.finditer("\d+(?!.*/).*\d+", stdout_list.decode('utf-8'))
+            category_match = re.finditer(".*\/v?.*?([0-9.]+).*", stdout_list.decode('utf-8'))
+            for match in category_match:
+                version_list.append(match[1])
+            upstream_version = max(version_list)
+            print("upstream version : [%s]" % upstream_version)
         else:
             print("not ready yet")
 
@@ -67,11 +68,6 @@ def check_upstream_stunnel():
 def check_package(package):
     check_version(package)
     check_upstream(package)
-#    check_upstream_stunnel()
-
-#check_package('htop')
-#check_version('htop')
-#check_upstream_stunnel()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
