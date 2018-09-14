@@ -3,6 +3,7 @@
 import argparse
 import requests
 import os
+import json
 import subprocess
 import re
 
@@ -38,18 +39,13 @@ def check_upstream(package):
         rgx = re.compile(r'git[hl]')
         if rgx.search(upstream_url):
             split_url = upstream_url.split("/")[:-2]
-            basename = '/'.join(split_url[:3]) + '/'
-            project_name = '/'.join(split_url[:5]) + '/'
-            cmd = 'git ls-remote --tags --refs %s' % (project_name)
-            proc = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout_list = proc.communicate()[0]
+            apibase = 'https://api.github.com/repos' + '/' + split_url[3] + '/' +  split_url[4] + '/tags'
+            github_json = requests.get(apibase, headers=headers)
+            data = github_json.json()
+            project_name = (data[0]['name'])
             version_list = []
-            #category_match = re.finditer("\d+(?!.*/).*\d+", stdout_list.decode('utf-8'))
-            category_match = re.finditer(".*\/v?.*?([0-9.]+).*", stdout_list.decode('utf-8'))
-            for match in category_match:
-                version_list.append(match[1])
-            upstream_version = max(version_list)
-            print("upstream version : [%s]" % upstream_version)
+            category_match = re.search('\d+(?!.*/).*\d+', project_name)
+            upstream_version = category_match.group(0)
             return upstream_version
         else:
             print("not ready yet")
@@ -78,7 +74,7 @@ def check_upstream_stunnel():
         print('upstream version is: [{}]'.format(upstream_version))
         return upstream_version
 
-#check_upstream("libarchive")
+#check_upstream("stunnel")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
