@@ -34,8 +34,8 @@ def check_upstream(package):
         category_match = re.search('\Source0[^:]*:(.+)', resp.content.decode('utf-8'))
         # to complicated regex here, just split -
         upstream_url = category_match.group(1).strip()
-        #print('source0 is: {}'.format(upstream_url))
-        if "github" or "gitlab" in upstream_url:
+        # print('source0 is: {}'.format(upstream_url))
+        if "github|gitlab"  in str(upstream_url):
             # split url and rejoin
             split_url = upstream_url.split("/")[:-2]
             basename = '/'.join(split_url[:3]) + '/'
@@ -53,14 +53,18 @@ def check_upstream(package):
             return upstream_version
         else:
             print("not ready yet")
+            exit(0)
 
 def compare_versions(package):
     our_ver = check_version(package)
     they_ver = check_upstream(package)
     if sorted(set(str(our_ver))) == sorted(set(str(they_ver))):
         print("OpenMandriva version of [{0}] is same [{1}] as in upstream [{2}]".format(package, our_ver, they_ver))
-    else:
+    elif sorted(set(str(our_ver))) < sorted(set(str(they_ver))):
         print("OpenMandriva version of [{0}] is lower [{1}] than in upstream [{2}]".format(package, our_ver, they_ver))
+    else:
+        print("OpenMandriva version of [{0}] is newer [{1}] than in upstream [{2}]".format(package, our_ver, they_ver))
+
 
 def check_upstream_stunnel():
     url = "http://www.stunnel.org/downloads.html"
@@ -73,6 +77,8 @@ def check_upstream_stunnel():
         upstream_version = category_match.group(0).strip('-')
         print('upstream version is: [{}]'.format(upstream_version))
         return upstream_version
+
+#check_upstream("libarchive")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
