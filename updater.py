@@ -57,13 +57,10 @@ def check_upstream(package):
 def compare_versions(package):
     our_ver = check_version(package)
     they_ver = check_upstream(package)
-    if our_ver == they_ver:
-        print("OpenMandriva version of [%s] is same as in upstream [%s]" % package, our_ver, they_ver)
-    elif they_ver > our_ver:
-        print("OpenMandriva version of [%s] is lower than in upstream [%s]" % package, our_ver, they_ver)
+    if sorted(set(str(our_ver))) == sorted(set(str(they_ver))):
+        print("OpenMandriva version of [{0}] is same [{1}] as in upstream [{2}]".format(package, our_ver, they_ver))
     else:
-        print("OpenMandriva version of [%s] is newer than in upstream [%s]" % package, our_ver, they_ver)
-
+        print("OpenMandriva version of [{0}] is lower [{1}] than in upstream [{2}]".format(package, our_ver, they_ver))
 
 def check_upstream_stunnel():
     url = "http://www.stunnel.org/downloads.html"
