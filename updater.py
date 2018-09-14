@@ -42,16 +42,13 @@ def check_upstream(package):
             basename = '/'.join(split_url[:3]) + '/'
             project_name = '/'.join(split_url[:5]) + '/'
             print(project_name)
-            cmd = 'git ls-remote --tag %s' % (project_name)
+            cmd = 'git ls-remote --tags --refs %s' % (project_name)
+            print(cmd)
             proc = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout_list = proc.communicate()[0]
-            category_match = re.search("refs/tags/(.*)$", stdout_list.decode('utf-8'))
-            obtained_ver = category_match.group(1)
-            if "v" in obtained_ver:
-                split_ver = obtained_ver.split("v")
-                print(split_ver[1])
-            else:
-                print(obtained_ver)
+            category_match = re.search("(?!.*/)(?!v)(?!.*-)[0-9a-zA-Z.]*$", stdout_list.decode('utf-8'))
+            obtained_ver = category_match.group(0)
+            print(obtained_ver)
         else:
             print("not ready yet")
 
