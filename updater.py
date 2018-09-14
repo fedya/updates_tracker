@@ -50,8 +50,20 @@ def check_upstream(package):
                 version_list.append(match[1])
             upstream_version = max(version_list)
             print("upstream version : [%s]" % upstream_version)
+            return upstream_version
         else:
             print("not ready yet")
+
+def compare_versions(package):
+    our_ver = check_version(package)
+    they_ver = check_upstream(package)
+    if our_ver == they_ver:
+        print("OpenMandriva version of [%s] is same as in upstream [%s]" % package, our_ver, they_ver)
+    elif they_ver > our_ver:
+        print("OpenMandriva version of [%s] is lower than in upstream [%s]" % package, our_ver, they_ver)
+    else:
+        print("OpenMandriva version of [%s] is newer than in upstream [%s]" % package, our_ver, they_ver)
+
 
 def check_upstream_stunnel():
     url = "http://www.stunnel.org/downloads.html"
@@ -65,14 +77,10 @@ def check_upstream_stunnel():
         print('upstream version is: [{}]'.format(upstream_version))
         return upstream_version
 
-def check_package(package):
-    check_version(package)
-    check_upstream(package)
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--package", help="package to check",
-                    type=check_package,
+                    type=compare_versions,
                     action="store")
 
     args = parser.parse_args()
