@@ -16,14 +16,14 @@ def check_version(package):
         print('requested package [{}] not found'.format(package))
     # page exist
     if resp.status_code == 200:
-        print('requested package [{}] found'.format(package))
-        print('trying to detect current version')
+#        print('requested package [{}] found'.format(package))
+#        print('trying to detect current version')
         category_match = re.search('\W*Version[^:]*:(.+)', resp.content.decode('utf-8'))
         # remove spaces
         version = category_match.group(1).strip()
         package_status = {'oma_pkg_ver': '%s' % (str(version)),
                           'package': '%s' % (str(package))}
-        print('current version is: [{}]'.format(version))
+        #print('current version is: [{}]'.format(version))
         return version
 
 def check_upstream(package):
@@ -70,24 +70,32 @@ def compare_versions(package):
 
     data = {}
     data['packages'] = []
-    data['packages'].append({
-    'package': package,
-    'omv_version': our_ver,
-    'upstream_version': upstream_ver,
-    'project_url': project_url
-    })
+    package_item = {
+        'package': package,
+        'omv_version': our_ver,
+        'upstream_version': upstream_ver,
+        'project_url': project_url
+    }
+    if splittedname(our_ver) == splittedname(upstream_ver):
+        package_item['status'] = 'no updates required'
+    if splittedname(our_ver) < splittedname(upstream_ver):
+        package_item['status'] = 'outdated'
+    if splittedname(our_ver) > splittedname(upstream_ver):
+        package_item['status'] > 'omv version is newer'
+
+    data['packages'].append(package_item)
     dumper = json.dumps(data)
     print(dumper)
 
-    if splittedname(our_ver) == splittedname(upstream_ver):
-        print("OpenMandriva version of [{0}] is same [{1}] as in upstream [{2}]".format(package, our_ver, upstream_ver))
-        print("Upstream URL {0}".format(project_url))
-    elif splittedname(our_ver) < splittedname(upstream_ver):
-        print("OpenMandriva version of [{0}] is lower [{1}] than in upstream [{2}]".format(package, our_ver, upstream_ver))
-        print("Upstream URL {0}".format(project_url))
-    elif splittedname(our_ver) > splittedname(upstream_ver):
-        print("OpenMandriva version of [{0}] is newer [{1}] than in upstream [{2}]".format(package, our_ver, upstream_ver))
-        print("Upstream URL {0}".format(project_url))
+#    if splittedname(our_ver) == splittedname(upstream_ver):
+#        print("OpenMandriva version of [{0}] is same [{1}] as in upstream [{2}]".format(package, our_ver, upstream_ver))
+#        print("Upstream URL {0}".format(project_url))
+#    elif splittedname(our_ver) < splittedname(upstream_ver):
+#        print("OpenMandriva version of [{0}] is lower [{1}] than in upstream [{2}]".format(package, our_ver, upstream_ver))
+#        print("Upstream URL {0}".format(project_url))
+#    elif splittedname(our_ver) > splittedname(upstream_ver):
+#        print("OpenMandriva version of [{0}] is newer [{1}] than in upstream [{2}]".format(package, our_ver, upstream_ver))
+#        print("Upstream URL {0}".format(project_url))
 
 def check_upstream_stunnel():
     url = "http://www.stunnel.org/downloads.html"
