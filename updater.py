@@ -68,7 +68,17 @@ def compare_versions(package):
     a = splittedname(our_ver)
     b = splittedname(upstream_ver)
 
-    they_ver = check_upstream(package[:2])
+    data = {}
+    data['packages'] = []
+    data['packages'].append({
+    'package': package,
+    'omv_version': our_ver,
+    'upstream_version': upstream_ver,
+    'project_url': project_url
+    })
+    dumper = json.dumps(data)
+    print(dumper)
+
     if splittedname(our_ver) == splittedname(upstream_ver):
         print("OpenMandriva version of [{0}] is same [{1}] as in upstream [{2}]".format(package, our_ver, upstream_ver))
         print("Upstream URL {0}".format(project_url))
@@ -78,7 +88,6 @@ def compare_versions(package):
     elif splittedname(our_ver) > splittedname(upstream_ver):
         print("OpenMandriva version of [{0}] is newer [{1}] than in upstream [{2}]".format(package, our_ver, upstream_ver))
         print("Upstream URL {0}".format(project_url))
-
 
 def check_upstream_stunnel():
     url = "http://www.stunnel.org/downloads.html"
