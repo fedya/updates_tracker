@@ -14,10 +14,7 @@ def check_version(package):
     resp = requests.get(url, headers=headers)
     if resp.status_code == 404:
         print('requested package [{}] not found'.format(package))
-    # page exist
     if resp.status_code == 200:
-#        print('requested package [{}] found'.format(package))
-#        print('trying to detect current version')
         category_match = re.search('\W*Version[^:]*:(.+)', resp.content.decode('utf-8'))
         # remove spaces
         version = category_match.group(1).strip()
@@ -35,23 +32,37 @@ def check_upstream(package):
         category_match = re.search('\Source0[^:]*:(.+)', resp.content.decode('utf-8'))
         # to complicated regex here, just split -
         upstream_url = category_match.group(1).strip()
-        # print('source0 is: {}'.format(upstream_url))
-        rgx = re.compile(r'git[hl]')
-        if rgx.search(upstream_url):
+#        print(upstream_url)
+#        print('source0 is: {}'.format(upstream_url))
+        if 'github' in upstream_url:
             split_url = upstream_url.split("/")[:-2]
-            project_url = '/'.join(split_url[:5]) + '/'
+            project_url = '/'.join(split_url[:6]) + '/'
             apibase = 'https://api.github.com/repos' + '/' + split_url[3] + '/' +  split_url[4] + '/tags'
             github_json = requests.get(apibase, headers=headers)
             data = github_json.json()
             project_name = (data[0]['name'])
-            version_list = []
             category_match = re.search('\d+(?!.*/).*\d+', project_name)
             upstream_version = category_match.group(0)
             return upstream_version, project_url
             # return {'upstream_version': upstream_version, 'project_url': project_url}
-        else:
-            print("not ready yet")
-            exit(0)
+        elif 'freedesktop' in str(upstream_url):
+            split_url = upstream_url.split("/")[:6]
+            project_url = '/'.join(split_url[:6]) + '/'
+            freedesktop_req = requests.get(project_url, headers=headers, allow_redirects=True)
+            if freedesktop_req.status_code == 404:
+                print('requested url [{}] not found'.format(url))
+            if freedesktop_req.status_code == 200:
+                if 'x11-driver' in package:
+                    version_list = []
+                    split_name = package.split("-")[:4]
+                    xf86base = 'xf86-' + (split_name[2]) + '-' + (split_name[3])
+                    category_match = re.finditer(xf86base+'[-]([\d.]*\d+)', freedesktop_req.content.decode('utf-8'))
+                    for match in category_match:
+                        version_list.append(match[1])
+                    upstream_version = max(version_list)
+                    print("upstream version : [%s]" % upstream_version)
+                    return upstream_version, project_url
+
 
 def tryint(x):
     try:
@@ -110,7 +121,7 @@ def check_upstream_stunnel():
         return upstream_version
 
 #check_upstream("stunnel")
-#compare_versions("stunnel")
+#compare_versions("liborcus")
 
 
 
