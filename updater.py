@@ -112,10 +112,12 @@ def check_upstream_stunnel():
 #check_upstream("stunnel")
 #compare_versions("stunnel")
 
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--package", help="package to check",
                     type=compare_versions,
-                    action="store")
+                    action="append", nargs='+')
 
     args = parser.parse_args()
