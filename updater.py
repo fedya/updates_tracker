@@ -20,7 +20,7 @@ def check_version(package):
         version = category_match.group(1).strip()
         package_status = {'oma_pkg_ver': '%s' % (str(version)),
                           'package': '%s' % (str(package))}
-        #print('current version is: [{}]'.format(version))
+#        print('current version is: [{}]'.format(version))
         return version
 
 def check_upstream(package):
@@ -49,11 +49,11 @@ def check_upstream(package):
             split_url = upstream_url.split("/")[:6]
             project_url = '/'.join(split_url[:6]) + '/'
             freedesktop_req = requests.get(project_url, headers=headers, allow_redirects=True)
+            version_list = []
             if freedesktop_req.status_code == 404:
                 print('requested url [{}] not found'.format(url))
             if freedesktop_req.status_code == 200:
                 if 'x11-driver' in package:
-                    version_list = []
                     split_name = package.split("-")[:4]
                     xf86base = 'xf86-' + (split_name[2]) + '-' + (split_name[3])
                     category_match = re.finditer(xf86base+'[-]([\d.]*\d+)', freedesktop_req.content.decode('utf-8'))
@@ -62,6 +62,16 @@ def check_upstream(package):
                     upstream_version = max(version_list)
                     print("upstream version : [%s]" % upstream_version)
                     return upstream_version, project_url
+                else:
+                    category_match = re.finditer(package+'[-]([\d.]*\d+)', freedesktop_req.content.decode('utf-8'))
+                    for match in category_match:
+                        version_list.append(match[1])
+                        #print(match.group(1))
+                    upstream_version = max(version_list)
+                    return upstream_version, project_url
+        else:
+            print("not ready yet")
+            exit(0)
 
 
 def tryint(x):
