@@ -102,7 +102,7 @@ def compare_versions(package):
     if splittedname(our_ver) < splittedname(upstream_ver):
         package_item['status'] = 'outdated'
     if splittedname(our_ver) > splittedname(upstream_ver):
-        package_item['status'] > 'omv version is newer'
+        package_item['status'] = 'omv version is newer'
 
     data['packages'].append(package_item)
     dumper = json.dumps(data)
