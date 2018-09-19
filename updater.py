@@ -7,7 +7,7 @@ import json
 import subprocess
 import re
 
-headers = {'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+headers = {'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.2171.95 Safari/537.36'}
 
 def check_version(package):
     url = "http://github.com/OpenMandrivaAssociation/{package}/raw/master/{package}.spec".format(package=package)
@@ -20,7 +20,8 @@ def check_version(package):
         version = category_match.group(1).strip()
         package_status = {'oma_pkg_ver': '%s' % (str(version)),
                           'package': '%s' % (str(package))}
-#        print('current version is: [{}]'.format(version))
+        print('current version is: [{}]'.format(version))
+        print(package_status)
         return version
 
 def check_upstream(package):
@@ -32,19 +33,21 @@ def check_upstream(package):
         category_match = re.search('\Source0[^:]*:(.+)', resp.content.decode('utf-8'))
         # to complicated regex here, just split -
         upstream_url = category_match.group(1).strip()
-#        print(upstream_url)
-#        print('source0 is: {}'.format(upstream_url))
+        print(upstream_url)
+        print('source0 is: {}'.format(upstream_url))
         if 'github' in upstream_url:
             split_url = upstream_url.split("/")[:-2]
             project_url = '/'.join(split_url[:6]) + '/'
             apibase = 'https://api.github.com/repos' + '/' + split_url[3] + '/' +  split_url[4] + '/tags'
+            print(apibase)
             github_json = requests.get(apibase, headers=headers)
             data = github_json.json()
             project_name = (data[0]['name'])
+            print(project_name)
             category_match = re.search('\d+(?!.*/).*\d+', project_name)
             upstream_version = category_match.group(0)
+            print(upstream_version)
             return upstream_version, project_url
-            # return {'upstream_version': upstream_version, 'project_url': project_url}
         elif 'freedesktop' in str(upstream_url):
             split_url = upstream_url.split("/")[:6]
             project_url = '/'.join(split_url[:6]) + '/'
@@ -56,17 +59,18 @@ def check_upstream(package):
                 if 'x11-driver' in package:
                     split_name = package.split("-")[:4]
                     xf86base = 'xf86-' + (split_name[2]) + '-' + (split_name[3])
+                    print(xf86base)
                     category_match = re.finditer(xf86base+'[-]([\d.]*\d+)', freedesktop_req.content.decode('utf-8'))
                     for match in category_match:
+                        print(match)
                         version_list.append(match[1])
                     upstream_version = max(version_list)
-                    print("upstream version : [%s]" % upstream_version)
                     return upstream_version, project_url
                 else:
                     category_match = re.finditer(package+'[-]([\d.]*\d+)', freedesktop_req.content.decode('utf-8'))
                     for match in category_match:
                         version_list.append(match[1])
-                        #print(match.group(1))
+                        print(match.group(1))
                     upstream_version = max(version_list)
                     return upstream_version, project_url
         else:
@@ -89,8 +93,6 @@ def compare_versions(package):
     a = splittedname(our_ver)
     b = splittedname(upstream_ver)
 
-    data = {}
-    data['packages'] = []
     package_item = {
         'package': package,
         'omv_version': our_ver,
@@ -102,21 +104,10 @@ def compare_versions(package):
     if splittedname(our_ver) < splittedname(upstream_ver):
         package_item['status'] = 'outdated'
     if splittedname(our_ver) > splittedname(upstream_ver):
-        package_item['status'] > 'omv version is newer'
+        package_item['status'] = 'omv version is newer'
 
-    data['packages'].append(package_item)
-    dumper = json.dumps(data)
-    print(dumper)
+    return package_item
 
-#    if splittedname(our_ver) == splittedname(upstream_ver):
-#        print("OpenMandriva version of [{0}] is same [{1}] as in upstream [{2}]".format(package, our_ver, upstream_ver))
-#        print("Upstream URL {0}".format(project_url))
-#    elif splittedname(our_ver) < splittedname(upstream_ver):
-#        print("OpenMandriva version of [{0}] is lower [{1}] than in upstream [{2}]".format(package, our_ver, upstream_ver))
-#        print("Upstream URL {0}".format(project_url))
-#    elif splittedname(our_ver) > splittedname(upstream_ver):
-#        print("OpenMandriva version of [{0}] is newer [{1}] than in upstream [{2}]".format(package, our_ver, upstream_ver))
-#        print("Upstream URL {0}".format(project_url))
 
 def check_upstream_stunnel():
     url = "http://www.stunnel.org/downloads.html"
@@ -130,15 +121,19 @@ def check_upstream_stunnel():
         print('upstream version is: [{}]'.format(upstream_version))
         return upstream_version
 
-#check_upstream("stunnel")
-#compare_versions("liborcus")
-
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--package", help="package to check",
-                    type=compare_versions,
-                    action="append", nargs='+')
-
+    parser.add_argument('--package', nargs='+', type=compare_versions)
+    parser.add_argument("-f", "--file", help="Open specified file")
     args = parser.parse_args()
+#    PackageFile = args.file
+#    with open(PackageFile) as f:
+#        data = f.readlines()
+#        final_list = []
+#        for pkg in data:
+#            final_list.append(pkg.strip())
+#        pkg_list = ' '.join(final_list)
+#        print(pkg_list)
+
+    print(json.dumps({"package": args.package}))
