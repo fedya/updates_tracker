@@ -46,7 +46,7 @@ def check_upstream(package):
             print(project_name)
             category_match = re.search('\d+(?!.*/).*\d+', project_name)
             upstream_version = category_match.group(0)
-            print(upstream_version)
+#            print(upstream_version)
             return upstream_version, project_url
         elif 'freedesktop' in str(upstream_url):
             split_url = upstream_url.split("/")[:6]
@@ -62,16 +62,17 @@ def check_upstream(package):
                     print(xf86base)
                     category_match = re.finditer(xf86base+'[-]([\d.]*\d+)', freedesktop_req.content.decode('utf-8'))
                     for match in category_match:
-                        print(match)
                         version_list.append(match[1])
-                    upstream_version = max(version_list)
+                    upstream_max_version= max([[int(j) for j in i.split(".")] for i in version_list])
+                    upstream_version = ".".join([str(i) for i in upstream_max_version])
                     return upstream_version, project_url
                 else:
                     category_match = re.finditer(package+'[-]([\d.]*\d+)', freedesktop_req.content.decode('utf-8'))
                     for match in category_match:
                         version_list.append(match[1])
-                        print(match.group(1))
-                    upstream_version = max(version_list)
+#                        print(match.group(1))
+                    upstream_max_version= max([[int(j) for j in i.split(".")] for i in version_list])
+                    upstream_version = ".".join([str(i) for i in upstream_max_version])
                     return upstream_version, project_url
         else:
             print("not ready yet")
