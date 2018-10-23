@@ -20,7 +20,6 @@ def splittedname(s):
 def compare_versions(package):
     name, our_ver, source0 = name_expander.check_version(package)
     upstream_ver, project_url = name_expander.check_upstream(package)
-
     package_item = {
         'package': package,
         'omv_version': our_ver,
