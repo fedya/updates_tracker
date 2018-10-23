@@ -88,7 +88,7 @@ def check_upstream(package):
     # htop 2.2.0 https://github.com/hishamhm/htop/archive/2.2.0.tar.gz
     print(upstream_name, our_ver, upstream_url)
     if 'github' in upstream_url:
-        github_check(upstream_url)
+        return github_check(upstream_url)
 #        try:
 #        split_url = upstream_url.split("/")[:-2]
 #        print(split_url)
