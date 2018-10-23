@@ -3,6 +3,10 @@ import os
 import sys
 import tempfile
 import requests
+import json
+import re
+
+headers = {'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.2171.95 Safari/537.36'}
 
 def get_nvs(spec):
     try:
@@ -27,7 +31,6 @@ def get_nvs(spec):
 
 
 def check_version(package):
-    headers = {'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.2171.95 Safari/537.36'}
     url = "http://github.com/OpenMandrivaAssociation/{package}/raw/master/{package}.spec".format(package=package)
     resp = requests.get(url, headers=headers)
     temp = tempfile.NamedTemporaryFile(prefix=package, suffix=".spec")
@@ -45,12 +48,39 @@ def check_version(package):
            name = names[0]
            version = names[1]
            source0 = names[2]
-           print(name, version, source0)
+#           print(name, version, source0)
            return name, version, source0
        finally:
            temp.close()
 
+def check_upstream(package):
+    upstream_name, our_ver, upstream_url = check_version(package)
+    # htop 2.2.0 https://github.com/hishamhm/htop/archive/2.2.0.tar.gz
+#    print(upstream_name, our_ver, upstream_url)
+    if 'github' in upstream_url:
+#        try:
+        split_url = upstream_url.split("/")[:-2]
+    #    print(split_url)
+        project_url = '/'.join(split_url[:6]) + '/'
+        apibase = 'https://api.github.com/repos' + '/' + split_url[3] + '/' +  split_url[4] + '/tags'
+#        print(apibase)
+        github_json = requests.get(apibase, headers=headers)
+        data = github_json.json()
+        project_name = (data[0]['name'])
+    #    print(project_name)
+        category_match = re.search('\d+(?!.*/).*\d+', project_name)
+        upstream_version = category_match.group(0)
+        # good version here
+#        print(upstream_version)
+        return upstream_version, project_url
+    #        except:
+    #            return None
+
+
 #version = get_nvs('/home/omv/mariadb/mariadb.spec')
+
+#check_upstream("htop")
+#check_github('https://api.github.com/repos/hishamhm/htop/tags', 'htop')
 #print(version)
 # name
 #print(version[0])
