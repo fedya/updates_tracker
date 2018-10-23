@@ -41,4 +41,4 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--package', nargs='+', type=compare_versions)
     args = parser.parse_args()
-    print(json.dumps({"package": args.package}))
+    print(json.dumps({"packages": args.package}))
