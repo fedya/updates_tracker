@@ -52,7 +52,7 @@ def check_version(package):
 #           print(name, version, source0)
            return name, version, source0
        except:
-           return name, version, None
+           return name, version, '0'
        finally:
            temp.close()
 
@@ -67,6 +67,7 @@ def github_check(upstream_url):
         data = github_json.json()
         project_name = (data[0]['name'])
         if 'xf86' in project_url:
+            print("imhere")
             category_match = re.search('[-]([\d.]*\d+)', project_name)
             upstream_version = category_match.group(1)
             print(upstream_version)
@@ -125,11 +126,13 @@ def check_upstream(package):
         return github_check(upstream_url)
     if 'freedesktop' in upstream_url:
         return freedesktop_check(upstream_url, package)
+    if '0' in upstream_url:
+        print("no source0 detected")
 
 
 #version = get_nvs('/home/omv/mariadb/mariadb.spec')
 
-#check_upstream("libx11")
+#check_upstream("x11-driver-video-sisimedia")
 #check_upstream("x11-driver-video-amdgpu")
 #check_github('https://api.github.com/repos/hishamhm/htop/tags', 'htop')
 #print(version)
