@@ -57,6 +57,7 @@ def check_version(package):
            temp.close()
 
 def github_check(upstream_url):
+    # add here version list
     split_url = upstream_url.split("/")[:-2]
 #    print(split_url)
     project_url = '/'.join(split_url[:6]) + '/'
@@ -97,7 +98,7 @@ def freedesktop_check(upstream_url, package):
     freedesktop_req = requests.get(project_url, headers=headers, allow_redirects=True)
     version_list = []
     if freedesktop_req.status_code == 404:
-        print('requested url [{}] not found'.format(url))
+        print('requested url [{}] not found'.format(upstream_url))
     if freedesktop_req.status_code == 200:
         if 'x11-driver' in package:
             split_name = package.split("-")[:4]
@@ -108,6 +109,16 @@ def freedesktop_check(upstream_url, package):
             upstream_max_version= max([[int(j) for j in i.split(".")] for i in version_list])
             upstream_version = ".".join([str(i) for i in upstream_max_version])
             return upstream_version, project_url
+        elif 'server' in package:
+            pkg_notcare = re.compile('xorg-server'+'[-]([\d.]*\d+)', re.IGNORECASE)
+            category_match = re.finditer(pkg_notcare, freedesktop_req.content.decode('utf-8'))
+            for match in category_match:
+                version_list.append(match[1])
+            upstream_max_version = max([[int(j) for j in i.split(".")] for i in version_list])
+            upstream_version = ".".join([str(i) for i in upstream_max_version])
+            print(upstream_version, project_url)
+            return upstream_version, project_url
+
         elif not 'x11-driver' in package:
             pkg_notcare = re.compile(package+'[-]([\d.]*\d+)', re.IGNORECASE)
             category_match = re.finditer(pkg_notcare, freedesktop_req.content.decode('utf-8'))
@@ -118,14 +129,38 @@ def freedesktop_check(upstream_url, package):
             print(upstream_version, project_url)
             return upstream_version, project_url
 
+def any_other(upstream_url, package):
+    split_url = upstream_url.split("/")[:6]
+    project_url = '/'.join(split_url[:5])
+    print(split_url)
+    print(project_url)
+    req = requests.get(project_url, headers=headers, allow_redirects=True)
+    version_list = []
+    if req.status_code == 404:
+        print('requested url [{}] not found'.format(upstream_url))
+    if req.status_code == 200:
+        try:
+            pkg_notcare = re.compile(package+'[-]([\d.]*\d+)', re.IGNORECASE)
+            category_match = re.finditer(pkg_notcare, req.content.decode('utf-8'))
+            for match in category_match:
+                version_list.append(match[1])
+            upstream_max_version = max([[int(j) for j in i.split(".")] for i in version_list])
+            upstream_version = ".".join([str(i) for i in upstream_max_version])
+            print(upstream_version, project_url)
+            return upstream_version, project_url
+        except:
+            pass
+
 def check_upstream(package):
     upstream_name, our_ver, upstream_url = check_version(package)
     # htop 2.2.0 https://github.com/hishamhm/htop/archive/2.2.0.tar.gz
     print(upstream_name, our_ver, upstream_url)
     if 'github' in upstream_url:
         return github_check(upstream_url)
-    if 'freedesktop' in upstream_url:
+    elif 'freedesktop' in upstream_url:
         return freedesktop_check(upstream_url, package)
+    else:
+        return any_other(upstream_url, package)
     if '0' in upstream_url:
         print("no source0 detected")
 
@@ -133,7 +168,7 @@ def check_upstream(package):
 #version = get_nvs('/home/omv/mariadb/mariadb.spec')
 
 #check_upstream("x11-driver-video-sisimedia")
-#check_upstream("x11-driver-video-amdgpu")
+#check_upstream("x11-server")
 #check_github('https://api.github.com/repos/hishamhm/htop/tags', 'htop')
 #print(version)
 # name
