@@ -18,27 +18,30 @@ def splittedname(s):
     return tuple(tryint(x) for x in re.split('([0-9]+)', s))
 
 def compare_versions(package):
-    name, our_ver, source0 = name_expander.check_version(package)
-    upstream_ver, project_url = name_expander.check_upstream(package)
-    package_item = {
-        'package': package,
-        'omv_version': our_ver,
-        'upstream_version': upstream_ver,
-        'project_url': project_url
-    }
+    try:
 
-    if splittedname(our_ver) == splittedname(upstream_ver):
-        package_item['status'] = 'no updates required'
-    if splittedname(our_ver) < splittedname(upstream_ver):
-        package_item['status'] = 'outdated'
-    if splittedname(our_ver) > splittedname(upstream_ver):
-        package_item['status'] = 'omv version is newer'
+        name, our_ver, source0 = name_expander.check_version(package)
+        upstream_ver, project_url = name_expander.check_upstream(package)
+        package_item = {
+            'package': package,
+            'omv_version': our_ver,
+            'upstream_version': upstream_ver,
+            'project_url': project_url
+        }
 
-    print(package_item)
-    return package_item
+        if splittedname(our_ver) == splittedname(upstream_ver):
+            package_item['status'] = 'no updates required'
+        if splittedname(our_ver) < splittedname(upstream_ver):
+            package_item['status'] = 'outdated'
+        if splittedname(our_ver) > splittedname(upstream_ver):
+            package_item['status'] = 'omv version is newer'
+        return package_item
+    except:
+        return None
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--package', nargs='+', type=compare_versions)
     args = parser.parse_args()
-    print(json.dumps({"packages": args.package}))
+    packages = [i for i in args.package if i is not None]
+    print(json.dumps({"packages": packages}))

@@ -151,6 +151,42 @@ def any_other(upstream_url, package):
         except:
             pass
 
+def qt5_check(upstream_url):
+    split_url = upstream_url.split("/")[:6]
+    project_url = '/'.join(split_url[:5])
+    req = requests.get(project_url, headers=headers, allow_redirects=True)
+    version_list = []
+    # http://download.qt.io/official_releases/qt/5.11/
+    true_version_list = []
+    if req.status_code == 404:
+        print('requested url [{}] not found'.format(upstream_url))
+    if req.status_code == 200:
+        try:
+            first_url = re.finditer('href=[\'"]?([\d.]*\d+)', req.content.decode('utf-8'))
+            for match in first_url:
+                version_list.append(match[1])
+            upstream_max_version = max([[int(j) for j in i.split(".")] for i in version_list])
+            upstream_version = ".".join([str(i) for i in upstream_max_version])
+
+            new_url = project_url + '/' + upstream_version
+            print(new_url)
+            req2 = requests.get(new_url, headers=headers, allow_redirects=True)
+            if req2.status_code == 404:
+                print('requested url [{}] not found'.format(new_url))
+            if req2.status_code == 200:
+                try:
+                    pkg_ver = re.finditer('href=[\'"]?([\d.]*\d+)', req2.content.decode('utf-8'))
+                    for match in pkg_ver:
+                        true_version_list.append(match[1])
+                    upstream_max_version = max([[int(j) for j in i.split(".")] for i in true_version_list])
+                    upstream_version = ".".join([str(i) for i in upstream_max_version])
+                    print(upstream_version)
+                    return upstream_version, project_url
+                except:
+                    return
+        except:
+            return
+
 def check_upstream(package):
     upstream_name, our_ver, upstream_url = check_version(package)
     # htop 2.2.0 https://github.com/hishamhm/htop/archive/2.2.0.tar.gz
@@ -159,6 +195,8 @@ def check_upstream(package):
         return github_check(upstream_url)
     elif 'freedesktop' in upstream_url:
         return freedesktop_check(upstream_url, package)
+    elif 'qt.io' in upstream_url:
+        return qt5_check(upstream_url)
     else:
         return any_other(upstream_url, package)
     if '0' in upstream_url:
