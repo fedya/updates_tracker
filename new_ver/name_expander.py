@@ -19,12 +19,10 @@ def get_nvs(spec):
        nvs.append(version)
        for (filename, num, flags) in rpm_spec.sources:
            if num == 0 and flags == 1:
-               # prints htop.tar.gz
-               tarball = filename.split("/")[-1]
-               # full path
-               # http://mirrors.n-ix.net/mariadb/mariadb-10.3.9/source/mariadb-10.3.9.tar.gz
-               # print(filename)
-               nvs.append(filename)
+               # path
+               # http://mirrors.n-ix.net/mariadb/mariadb-10.3.9/source/
+               source_link = '/'.join(filename.split("/")[:-1])
+               nvs.append(source_link)
        return nvs
     except:
         return None
@@ -58,8 +56,7 @@ def check_version(package):
 
 def github_check(upstream_url):
     # add here version list
-    split_url = upstream_url.split("/")[:-2]
-#    print(split_url)
+    split_url = upstream_url.split("/")[:-1]
     project_url = '/'.join(split_url[:6]) + '/'
     try:
         apibase = 'https://api.github.com/repos' + '/' + split_url[3] + '/' +  split_url[4] + '/tags'
@@ -86,7 +83,7 @@ def github_check(upstream_url):
         # 'start'
 #        print(project_name)
         category_match = re.search('\d+(?!.*/).*\d+', project_name)
-        upstream_version = category_match.group(0)
+        upstream_version = category_match.group(1)
         # good version here
         print(upstream_version, project_url)
         return upstream_version, project_url
@@ -149,7 +146,13 @@ def any_other(upstream_url, package):
             print(upstream_version, project_url)
             return upstream_version, project_url
         except:
-            pass
+            category_match = re.finditer('href=[\'"]?([\d.]*\d+)', req.content.decode('utf-8'))
+            for match in category_match:
+                version_list.append(match[1])
+            upstream_max_version = max([[int(j) for j in i.split(".")] for i in version_list])
+            upstream_version = ".".join([str(i) for i in upstream_max_version])
+            print(upstream_version, project_url)
+            return upstream_version, project_url
 
 def qt5_check(upstream_url):
     split_url = upstream_url.split("/")[:6]
@@ -206,7 +209,7 @@ def check_upstream(package):
 #version = get_nvs('/home/omv/mariadb/mariadb.spec')
 
 #check_upstream("x11-driver-video-sisimedia")
-#check_upstream("x11-server")
+#check_upstream("python")
 #check_github('https://api.github.com/repos/hishamhm/htop/tags', 'htop')
 #print(version)
 # name
