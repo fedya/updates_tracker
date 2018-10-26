@@ -88,6 +88,8 @@ def github_check(upstream_url):
         print(upstream_version, project_url)
         return upstream_version, project_url
 
+
+
 def freedesktop_check(upstream_url, package):
     split_url = upstream_url.split("/")[:6]
     project_url = '/'.join(split_url[:6]) + '/'
@@ -190,6 +192,21 @@ def qt5_check(upstream_url):
         except:
             return
 
+def check_python_module(package):
+    split_name = package.split("-")[1]
+    url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
+    try:
+        req = requests.get(url, headers=headers, allow_redirects=True)
+        pypi_json = requests.get(url, headers=headers)
+        data = pypi_json.json()
+        upstream_version = data['info']['version'][:]
+        project_url = data['info']['project_url'][:]
+        print(upstream_version, project_url)
+        return upstream_version, project_url
+    except:
+        return
+
+
 def check_upstream(package):
     upstream_name, our_ver, upstream_url = check_version(package)
     # htop 2.2.0 https://github.com/hishamhm/htop/archive/2.2.0.tar.gz
@@ -200,6 +217,8 @@ def check_upstream(package):
         return freedesktop_check(upstream_url, package)
     elif 'qt.io' in upstream_url:
         return qt5_check(upstream_url)
+    elif 'pypi' or 'pythonhosted' in upstream_url:
+        return check_python_module(package)
     else:
         return any_other(upstream_url, package)
     if '0' in upstream_url:
@@ -209,7 +228,7 @@ def check_upstream(package):
 #version = get_nvs('/home/omv/mariadb/mariadb.spec')
 
 #check_upstream("x11-driver-video-sisimedia")
-#check_upstream("python")
+#check_upstream("python-six")
 #check_github('https://api.github.com/repos/hishamhm/htop/tags', 'htop')
 #print(version)
 # name
