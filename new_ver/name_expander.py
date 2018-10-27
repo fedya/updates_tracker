@@ -193,9 +193,9 @@ def qt5_check(upstream_url):
             return
 
 def check_python_module(package):
-    split_name = package.split("-")[1]
-    url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
     try:
+        split_name = package.split("-")[1]
+        url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
         req = requests.get(url, headers=headers, allow_redirects=True)
         pypi_json = requests.get(url, headers=headers)
         data = pypi_json.json()
@@ -206,6 +206,21 @@ def check_python_module(package):
     except:
         return
 
+def netfilter_check(package):
+    url = 'https://www.netfilter.org/news.html'
+    version_list = []
+    try:
+        req = requests.get(url, allow_redirects=True)
+        pkg_notcare = re.compile(package+'[-]([\d.]*\d+)', re.IGNORECASE)
+        category_match = re.finditer(pkg_notcare, req.content.decode('utf-8'))
+        for match in category_match:
+            version_list.append(match[1])
+        upstream_max_version = max([[int(j) for j in i.split(".")] for i in version_list])
+        upstream_version = ".".join([str(i) for i in upstream_max_version])
+        print(upstream_version, url)
+        return upstream_version, url
+    except:
+        return
 
 def check_upstream(package):
     upstream_name, our_ver, upstream_url = check_version(package)
@@ -217,8 +232,12 @@ def check_upstream(package):
         return freedesktop_check(upstream_url, package)
     elif 'qt.io' in upstream_url:
         return qt5_check(upstream_url)
-    elif 'pypi' or 'pythonhosted' in upstream_url:
+    elif 'pypi' in upstream_url:
         return check_python_module(package)
+    elif 'pythonhosted' in upstream_url:
+        return check_python_module(package)
+    elif 'netfilter' in upstream_url:
+        return netfilter_check(package)
     else:
         return any_other(upstream_url, package)
     if '0' in upstream_url:
@@ -228,7 +247,7 @@ def check_upstream(package):
 #version = get_nvs('/home/omv/mariadb/mariadb.spec')
 
 #check_upstream("x11-driver-video-sisimedia")
-#check_upstream("python-six")
+#check_upstream("iptables")
 #check_github('https://api.github.com/repos/hishamhm/htop/tags', 'htop')
 #print(version)
 # name
