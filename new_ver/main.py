@@ -8,14 +8,17 @@ import subprocess
 import re
 import tempfile
 
+
 def tryint(x):
     try:
         return int(x)
     except ValueError:
         return x
 
+
 def splittedname(s):
     return tuple(tryint(x) for x in re.split('([0-9]+)', s))
+
 
 def compare_versions(package):
     try:
@@ -38,6 +41,7 @@ def compare_versions(package):
         return package_item
     except:
         return None
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
