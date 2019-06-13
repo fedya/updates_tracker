@@ -33,9 +33,9 @@ def get_nvs(spec):
 
 
 def check_version(package):
-    #url = "http://github.com/OpenMandrivaAssociation/{package}/raw/master/{package}.spec".format(package=package)
-    url = "https://abf.io/import/{package}/raw/rosa2019.1/{package}.spec".format(
-        package=package)
+    url = "http://github.com/OpenMandrivaAssociation/{package}/raw/master/{package}.spec".format(package=package)
+    #url = "https://abf.io/import/{package}/raw/rosa2019.1/{package}.spec".format(
+    #    package=package)
     resp = requests.get(url, headers=headers)
     temp = tempfile.NamedTemporaryFile(prefix=package, suffix=".spec")
     if resp.status_code == 404:

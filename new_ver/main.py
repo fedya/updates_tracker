@@ -44,8 +44,25 @@ def compare_versions(package):
 
 
 if __name__ == '__main__':
+    weird_list = []
     parser = argparse.ArgumentParser()
-    parser.add_argument('--package', nargs='+', type=compare_versions)
+    parser.add_argument('--package', nargs='+', type = compare_versions)
+    parser.add_argument('--file', help='file with packages list')
+    parser.add_argument('--output', help='file to output results')
     args = parser.parse_args()
-    packages = [i for i in args.package if i is not None]
-    print(json.dumps({"packages": packages}))
+    if args.file is not None:
+        with open(args.file) as file:
+            try:
+                for line in file:
+                    a = compare_versions(line.strip())
+                    weird_list.append(a)
+            except:
+                print('shit happened')
+        if args.output is not None:
+            with open(args.output, 'w') as out_json:
+                json.dump({'packages': weird_list}, out_json, sort_keys=True, indent=4)
+        else:
+            print(json.dumps({"packages": weird_list}))
+    if args.package is not None:
+        packages = [i for i in args.package if i is not None]
+        print(json.dumps({"packages": packages}))
