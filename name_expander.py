@@ -62,6 +62,11 @@ def check_version(package):
 
 
 def github_check(upstream_url):
+    print(upstream_url)
+    print(upstream_url)
+    print(upstream_url)
+    print(upstream_url)
+    print(upstream_url)
     # add here version list
     split_url = upstream_url.split("/")[:-1]
     project_url = '/'.join(split_url[:6]) + '/'
