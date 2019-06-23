@@ -2,17 +2,13 @@ python-pystache
 python-twisted
 python-nose
 python-lzma
-python-which
 python-random2
 python-parsing
 python-pytz
-python-pygoocanvas
 python-levenshtein
 python-slip
 python-virtualenv
 python-matplotlib
-python-gobject
-python-sexy
 python-zope-interface
 python-gpgme
 python-utmp
@@ -74,7 +70,6 @@ python-beaker
 python-gtksourceview
 python-configobj
 python-GnuPG-Interface
-dbus-python
 python-imaging
 python-pynacl
 python-axiom
@@ -82,7 +77,6 @@ python-cython
 python-epsilon
 python-clientform
 python-pylibacl
-ipython
 python-django
 python-pytools
 python-numpy
@@ -103,10 +97,8 @@ python-markdown
 python-vatnumber
 python-cryptography
 python-cffi
-python-keyczar
 python-zope.interface
 python-ipaddr
-texlive-pythontex
 python-parted
 python-urllib3
 python-gstreamer1.0
@@ -131,7 +123,6 @@ python-ecdsa
 python-pycryptodome
 python-appdirs
 python-cycler
-python2-mock
 python-xattr
 python-cparser
 python-enum34
@@ -178,7 +169,6 @@ python-hyperlink
 python-service_identity
 python-asn1-modules
 python-bugzilla
-kdev-python
 python-pypeg2
 python-pytoml
 python-dulwich
@@ -189,13 +179,8 @@ python-pycodestyle
 python-smartcols
 python-pytest-runner
 python-setuptools_scm
-pythonqt
 python-json5
-python2-setuptools_scm
 python-kiwisolver
-python2-backports-functools_lru_cache
-python2-dateutil
-python2-subprocess32
 python-sh
 python-notify2
 python-xlib
@@ -235,7 +220,6 @@ python-coverage
 python-extras
 python-execnet
 python-apipkg
-python-qt5-webengine
 python-sphinxcontrib-jsmath
 python-sphinxcontrib-qthelp
 python-sphinxcontrib-devhelp

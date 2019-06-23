@@ -17,12 +17,12 @@ github_headers = {'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gec
 headers = {'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.2171.95 Safari/537.36'}
 
 home = os.environ.get('HOME')
-package_status = 'https://gist.github.com/fedya/a300af51a5eba8b00aad2421ecc3bdc3/raw/d51eb92562ae49b6fd3fe0d9d3121b112b7f9b11/gistfile1.txt'
 project_version = 'master'
+nvs = []
+nvss =  []
 
 def get_nvs(spec):
     print('extracting OMV version first')
-    nvs = []
     try:
         ts = rpm.TransactionSet()
         rpm_spec = ts.parseSpec(spec)
@@ -41,8 +41,8 @@ def get_nvs(spec):
         # ['vim', '8.1.1524', 'https://github.com/vim/vim/archive', 'https://github.com/vim/vim/archive/v8.1.1524.tar.gz']
         print('omv version: [{}]'.format(version))
         print('omv package name: [{}]'.format(name))
-        return nvs
     except:
+        print('probablt specfile damaged')
         return None
 
 
@@ -53,18 +53,18 @@ def github_check(upstream_url):
     try:
         apibase = 'https://api.github.com/repos' + '/' + \
             split_url[3] + '/' + split_url[4] + '/tags'
-#        print(apibase)
+        print(apibase)
         github_json = requests.get(apibase, headers=github_headers)
         data = github_json.json()
         project_name = (data[0]['name'])
         if 'xf86' in project_url:
             category_match = re.search('[-]([\d.]*\d+)', project_name)
             upstream_version = category_match.group(1)
-#            print(upstream_version)
+            print(upstream_version)
         else:
             category_match = re.search('\d+(?!.*/).*\d+', project_name)
             upstream_version = category_match.group(0)
-#            print(upstream_version)
+            print(upstream_version)
         return upstream_version, project_url
     except:
         apibase = 'https://api.github.com/repos' + '/' + \
@@ -83,24 +83,94 @@ def github_check(upstream_url):
 
 
 def check_python_module(package):
-    split_name = package.split("-")[1]
-    url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
-    req = requests.get(url, allow_redirects=True)
-    pypi_json = requests.get(url)
-    data = pypi_json.json()
-    upstream_version = data['info']['version'][:]
-    project_url = data['info']['project_url'][:]
-    download_url = data['urls']
-    for item in download_url:
-         if item['python_version'] == 'source':
-             archive = item['url']
-    print(json.dumps(download_url))
-    return upstream_version, project_url, archive
+    try:
+        print('im in check python mod')
+        name, omv_version, url, source0 = check_version(package)
+        print(name)
+        split_name = re.split(r'python([\d]?)-', name)[-1]
+        print(split_name)
+        url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
+        print(url)
+        req = requests.get(url, allow_redirects=True)
+        if req.status_code == 404:
+            print('requested module [{}] not found'.format(split_name))
+            url = 'https://pypi.python.org/pypi/{}/json'.format(package)
+            req = requests.get(url, allow_redirects=True)
+
+            if req.status_code == 404:
+                split_name = 'py' + name.split("-")[1]
+                url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
+                pypi_json = requests.get(url)
+                data = pypi_json.json()
+                upstream_version = data['info']['version'][:]
+                project_url = data['info']['project_url'][:]
+                download_url = data['urls']
+                for item in download_url:
+                    if item['python_version'] == 'source':
+                         archive = item['url']
+               # print(json.dumps(download_url))
+                return upstream_version, project_url, archive
+
+            pypi_json = requests.get(url)
+            data = pypi_json.json()
+            upstream_version = data['info']['version'][:]
+            project_url = data['info']['project_url'][:]
+            download_url = data['urls']
+            for item in download_url:
+                if item['python_version'] == 'source':
+                     archive = item['url']
+            #print(json.dumps(download_url))
+            return upstream_version, project_url, archive
+
+        if req.status_code == 200:
+            pypi_json = requests.get(url)
+            data = pypi_json.json()
+            #print(data)
+            upstream_version = data['info']['version'][:]
+            project_url = data['info']['project_url'][:]
+            download_url = data['urls']
+            print(download_url)
+            for item in download_url:
+                 if item['python_version'] == 'source':
+                     archive = item['url']
+            #print(json.dumps(download_url))
+            return upstream_version, project_url, archive
+    except:
+        pass
+
+def any_other(upstream_url, package):
+    split_url = upstream_url.split("/")[:6]
+    project_url = '/'.join(split_url[:5])
+    req = requests.get(project_url, headers=headers, allow_redirects=True)
+    version_list = []
+    if req.status_code == 404:
+        print('requested url [{}] not found'.format(upstream_url))
+    if req.status_code == 200:
+        try:
+            pkg_notcare = re.compile(package+'[-]([\d.]*\d+)', re.IGNORECASE)
+            category_match = re.finditer(
+                pkg_notcare, req.content.decode('utf-8'))
+            for match in category_match:
+                version_list.append(match[1])
+            upstream_max_version = max(
+                [[int(j) for j in i.split(".")] for i in version_list])
+            upstream_version = ".".join([str(i) for i in upstream_max_version])
+            print(upstream_version, project_url)
+            return upstream_version, project_url
+        except:
+            category_match = re.finditer(
+                'href=[\'"]?([\d.]*\d+)', req.content.decode('utf-8'))
+            for match in category_match:
+                version_list.append(match[1])
+            upstream_max_version = max(
+                [[int(j) for j in i.split(".")] for i in version_list])
+            upstream_version = ".".join([str(i) for i in upstream_max_version])
+            print(upstream_version, project_url)
+            return upstream_version, project_url
 
 
 
-# it is checker for OMV version
-# not upstream
+
 def check_version(package):
     print('checking upstream version for package [{}]'.format(package))
     url = "http://github.com/OpenMandrivaAssociation/{package}/raw/master/{package}.spec".format(package=package)
@@ -116,15 +186,16 @@ def check_version(package):
             # print("Name of the file is:", temp.name)
             temp.write(spec)
             temp.seek(0)
-            names = get_nvs(spec_path)
-            name = names[0]
-            version = names[1]
-            source = names[2]
-            source0 = names[3]
+            get_nvs(spec_path)
+            name = nvs[0]
+            version = nvs[1]
+            source = nvs[2]
+            source0 = nvs[3]
             #print(name, version, source, source0)
+            nvss.extend([name, version, source, source0])
             return name, version, source, source0
         except:
-            return name, version, '0', '0'
+            pass
         finally:
             temp.close()
 
@@ -141,46 +212,51 @@ def splittedname(s):
 
 
 def check_upstream(package):
-    upstream_name, our_ver, upstream_url, source0 = check_version(package)
+    upstream_name, our_ver, upstream_url, source0 = nvss
     if 'github' in upstream_url:
         upstream_version, upstream_url = github_check(upstream_url)
         print('upstream version is [{}]'.format(upstream_version))
         print('upstream url is [{}]'.format(upstream_url))
         print('=========================================')
         return upstream_version, upstream_url
-    elif 'pypi' in upstream_url:
+    elif 'pypi' or 'python' in upstream_url:
         upstream_version, upstream_url, archive = check_python_module(package)
         print('upstream version is [{}]'.format(upstream_version))
         print('upstream archive is [{}]'.format(archive))
         print('=========================================')
         return upstream_version, upstream_url, archive
-
+    else:
+        return any_other(upstream_url, package)
 
 
 def compare_versions(package):
-    name, omv_version, url, source0 = check_version(package)
-    upstream_ver, upstream_url, *archive = check_upstream(package)
-
-    if len(archive) == 1:
-        archive = archive[0]
-    else:
-        archive = None
-    package_item = {
-        'package': package,
-        'omv_version': omv_version,
-        'upstream_version': upstream_ver,
-        'project_url': upstream_url
-    }
-    if archive is not None:
-        package_item['archive'] = archive
-#
-    if splittedname(omv_version) == splittedname(upstream_ver):
-        package_item['status'] = 'updated'
-    if splittedname(omv_version) < splittedname(upstream_ver):
-        package_item['status'] = 'outdated'
-    if splittedname(omv_version) > splittedname(upstream_ver):
-        package_item['status'] = 'unknown'
-    return package_item
+    try:
+        name, omv_version, url, source0 = nvss
+        print(name, omv_version, url, source0)
+        print('check upstream')
+        upstream_ver, upstream_url, *archive = check_upstream(package)
+        if len(archive) == 1:
+            archive = archive[0]
+        else:
+            archive = None
+        package_item = {
+            'package': package,
+            'omv_version': omv_version,
+            'upstream_version': upstream_ver,
+            'project_url': upstream_url
+        }
+        print(package_item)
+        if archive is not None:
+            package_item['archive'] = archive
+        if splittedname(omv_version) == splittedname(upstream_ver):
+            package_item['status'] = 'updated'
+        if splittedname(omv_version) < splittedname(upstream_ver):
+            package_item['status'] = 'outdated'
+        if splittedname(omv_version) > splittedname(upstream_ver):
+            package_item['status'] = 'unknown'
+        return package_item
+    except:
+        pass
 
 
 def remove_if_exist(path):
@@ -252,6 +328,7 @@ def git_push(package):
         sys.exit(1)
         print(e)
 
+
 def upload_sources(package):
     abf_yml = home + '/' + package + '/' + '.abf.yml'
     remove_if_exist(abf_yml)
@@ -284,33 +361,36 @@ def update_spec(package):
     output = '/tmp/' + package + '.spec'
     remove_if_exist(output)
     print('linting version')
-    if lint_version(upstream_version) is False and status == 'outdated':
-        print('update required')
-        # find current version
-        clone_repo(package, project_version)
-        version_pattern = 'Version:\W*({})'.format(omv_version)
-        specname = home + '/' + package + '/' + package + '.spec'
-        with open(specname) as f:
-            for line in f:
-                change_version = re.sub(version_pattern, 'Version:\t' + upstream_version, line)
-                with open(output, 'a') as outfile:
-                    outfile.write(change_version)
-            target_spec = home + '/' + package + '/' + package + '.spec'
-            shutil.move(output, target_spec)
-        if new_source0 is not None:
-            source_pattern = 'Source0:\W*(.*)'
-            with open(specname) as f:
-                for line in f:
-                    change_source = re.sub(source_pattern, 'Source0:\t' + new_source0, line)
-                    with open(output, 'a') as outfile:
-                        outfile.write(change_source)
-                target_spec = home + '/' + package + '/' + package + '.spec'
-                shutil.move(output, target_spec)
-        if run_local_builder(package, project_version) is not False:
-            upload_sources(package)
-            git_commit('version autoupdate [{}]'.format(upstream_version), package)
-            git_push(package)
-            abf_build(package)
+    try:
+       if lint_version(upstream_version) is False and status == 'outdated':
+           print('update required')
+           # find current version
+           clone_repo(package, project_version)
+           version_pattern = 'Version:\W*({})'.format(omv_version)
+           specname = home + '/' + package + '/' + package + '.spec'
+           with open(specname) as f:
+               for line in f:
+                   change_version = re.sub(version_pattern, 'Version:\t' + upstream_version, line)
+                   with open(output, 'a') as outfile:
+                       outfile.write(change_version)
+               target_spec = home + '/' + package + '/' + package + '.spec'
+               shutil.move(output, target_spec)
+           if new_source0 is not None:
+               source_pattern = 'Source0:\W*(.*)'
+               with open(specname) as f:
+                   for line in f:
+                       change_source = re.sub(source_pattern, 'Source0:\t' + new_source0, line)
+                       with open(output, 'a') as outfile:
+                           outfile.write(change_source)
+                   target_spec = home + '/' + package + '/' + package + '.spec'
+                   shutil.move(output, target_spec)
+           if run_local_builder(package, project_version) is not False:
+               upload_sources(package)
+               git_commit('version autoupdate [{}]'.format(upstream_version), package)
+               git_push(package)
+               abf_build(package)
+    except:
+        pass
 
 def print_log(message, log):
     try:
@@ -341,20 +421,35 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.file is not None:
         with open(args.file) as file:
-            try:
-                for line in file:
-                    update_spec(line.strip())
-            except:
-                print('shit happened')
+             for line in file:
+
+                 # clear lists
+                 del nvss[:]
+                 del nvs[:]
+                 print(line.strip())
+                 package = line.strip()
+                 check_version(package)
+                 try:
+                     update_spec(package)
+                 except:
+                     pass
+                
     if args.package is not None:
         packages = [i for i in args.package if i is not None]
         for package in packages:
-            update_spec(package)
+            # clear lists
+            del nvss[:]
+            del nvs[:]
+            check_version(package)
+            try:
+                update_spec(package)
+            except:
+                pass
+
 #update_spec('python-sqlalchemy')
-
-
 #check_upstream('vim')
 #compare_versions('python-sqlalchemy')
 #compare_versions('python-coverage')
 #compare_versions('vim')
 #compare_versions('sway')
+
