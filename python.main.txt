@@ -226,3 +226,4 @@ python-sphinxcontrib-devhelp
 python-sphinxcontrib-htmlhelp
 python-sphinxcontrib-applehelp
 python-sphinxcontrib-serializinghtml
+python-soupsieve

@@ -46,94 +46,45 @@ def get_nvs(spec):
         return None
 
 
-def github_check(upstream_url):
-    # add here version list
-    split_url = upstream_url.split("/")[:-1]
-    project_url = '/'.join(split_url[:6]) + '/'
-    try:
-        apibase = 'https://api.github.com/repos' + '/' + \
-            split_url[3] + '/' + split_url[4] + '/tags'
-        print(apibase)
-        github_json = requests.get(apibase, headers=github_headers)
-        data = github_json.json()
-        project_name = (data[0]['name'])
-        if 'xf86' in project_url:
-            category_match = re.search('[-]([\d.]*\d+)', project_name)
-            upstream_version = category_match.group(1)
-            print(upstream_version)
-        else:
-            category_match = re.search('\d+(?!.*/).*\d+', project_name)
-            upstream_version = category_match.group(0)
-            print(upstream_version)
-        return upstream_version, project_url
-    except:
-        apibase = 'https://api.github.com/repos' + '/' + \
-            split_url[3] + '/' + split_url[4] + '/releases'
-#        print(apibase)
-        github_json = requests.get(apibase, headers=github_headers)
-        data = github_json.json()
-        project_name = (data[0]['name'])
-        # 'start'
-#        print(project_name)
-        category_match = re.search('\d+(?!.*/).*\d+', project_name)
-        upstream_version = category_match.group(1)
-        # good version here
-#        print(upstream_version, project_url)
-        return upstream_version, project_url
+
+def python_packages(name):
+    url = 'https://pypi.python.org/pypi/{}/json'.format(name)
+    pypi_json = requests.get(url)
+    exit_code = pypi_json.status_code
+    if exit_code == 200:
+        data = pypi_json.json()
+        return exit_code, data
+    else:
+        return exit_code, None
 
 
 def check_python_module(package):
     try:
-        print('im in check python mod')
         name, omv_version, url, source0 = check_version(package)
-        print(name)
+        # exclude python-
         split_name = re.split(r'python([\d]?)-', name)[-1]
-        print(split_name)
-        url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
-        print(url)
-        req = requests.get(url, allow_redirects=True)
-        if req.status_code == 404:
-            print('requested module [{}] not found'.format(split_name))
-            url = 'https://pypi.python.org/pypi/{}/json'.format(package)
-            req = requests.get(url, allow_redirects=True)
-
-            if req.status_code == 404:
-                split_name = 'py' + name.split("-")[1]
-                url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
-                pypi_json = requests.get(url)
-                data = pypi_json.json()
-                upstream_version = data['info']['version'][:]
-                project_url = data['info']['project_url'][:]
-                download_url = data['urls']
-                for item in download_url:
-                    if item['python_version'] == 'source':
-                         archive = item['url']
-               # print(json.dumps(download_url))
-                return upstream_version, project_url, archive
-
-            pypi_json = requests.get(url)
-            data = pypi_json.json()
+        module_request, data = python_packages(split_name)
+        if module_request == 200:
+            upstream_version = data['info']['version'][:]
+            project_url = data['info']['project_url'][:]
+            download_url = data['urls']
+            for item in download_url:
+                 if item['python_version'] == 'source':
+                     archive = item['url']
+            return upstream_version, project_url, archive
+        if module_request == 404:
+            # like pycurl
+            # like pyOpenSSL
+            split_name = 'py' + name.split("-")[1]
+            # still can return 404
+            module_request, data = python_packages(split_name)
             upstream_version = data['info']['version'][:]
             project_url = data['info']['project_url'][:]
             download_url = data['urls']
             for item in download_url:
                 if item['python_version'] == 'source':
                      archive = item['url']
-            #print(json.dumps(download_url))
-            return upstream_version, project_url, archive
-
-        if req.status_code == 200:
-            pypi_json = requests.get(url)
-            data = pypi_json.json()
-            #print(data)
-            upstream_version = data['info']['version'][:]
-            project_url = data['info']['project_url'][:]
-            download_url = data['urls']
-            print(download_url)
-            for item in download_url:
-                 if item['python_version'] == 'source':
-                     archive = item['url']
-            #print(json.dumps(download_url))
+           # print(json.dumps(download_url))
             return upstream_version, project_url, archive
     except:
         pass
@@ -172,7 +123,7 @@ def any_other(upstream_url, package):
 
 
 def check_version(package):
-    print('checking upstream version for package [{}]'.format(package))
+    print('checking OpenMandriva ingit version for package [{}]'.format(package))
     url = "http://github.com/OpenMandrivaAssociation/{package}/raw/master/{package}.spec".format(package=package)
     resp = requests.get(url, headers=headers)
     temp = tempfile.NamedTemporaryFile(prefix=package, suffix=".spec")
@@ -210,31 +161,71 @@ def tryint(x):
 def splittedname(s):
     return tuple(tryint(x) for x in re.split('([0-9]+)', s))
 
+def github_check(upstream_url):
+    # add here version list
+    split_url = upstream_url.split("/")[:-1]
+    project_url = '/'.join(split_url[:6]) + '/'
+    try:
+        apibase = 'https://api.github.com/repos' + '/' + \
+            split_url[3] + '/' + split_url[4] + '/tags'
+        print(apibase)
+        github_json = requests.get(apibase, headers=github_headers)
+        data = github_json.json()
+        project_name = (data[0]['name'])
+        if 'xf86' in project_url:
+            category_match = re.search('[-]([\d.]*\d+)', project_name)
+            upstream_version = category_match.group(1)
+            print(upstream_version)
+        else:
+            category_match = re.search('\d+(?!.*/).*\d+', project_name)
+            upstream_version = category_match.group(0)
+            print(upstream_version)
+        return upstream_version, project_url
+    except:
+        apibase = 'https://api.github.com/repos' + '/' + \
+            split_url[3] + '/' + split_url[4] + '/releases'
+#        print(apibase)
+        github_json = requests.get(apibase, headers=github_headers)
+        data = github_json.json()
+        project_name = (data[0]['name'])
+        # 'start'
+#        print(project_name)
+        category_match = re.search('\d+(?!.*/).*\d+', project_name)
+        upstream_version = category_match.group(1)
+        # good version here
+        print(upstream_version, project_url)
+        return upstream_version, project_url
+
 
 def check_upstream(package):
     upstream_name, our_ver, upstream_url, source0 = nvss
+    print('check upstream')
     if 'github' in upstream_url:
         upstream_version, upstream_url = github_check(upstream_url)
         print('upstream version is [{}]'.format(upstream_version))
         print('upstream url is [{}]'.format(upstream_url))
         print('=========================================')
         return upstream_version, upstream_url
-    elif 'pypi' or 'python' in upstream_url:
+    elif 'qt.io' in upstream_url:
+        print(upstream_url)
+        return qt5_check(upstream_url)
+    elif 'python' in upstream_name:
         upstream_version, upstream_url, archive = check_python_module(package)
         print('upstream version is [{}]'.format(upstream_version))
         print('upstream archive is [{}]'.format(archive))
         print('=========================================')
         return upstream_version, upstream_url, archive
     else:
+        print('any other')
         return any_other(upstream_url, package)
 
 
 def compare_versions(package):
-    try:
+#    try:
         name, omv_version, url, source0 = nvss
         print(name, omv_version, url, source0)
-        print('check upstream')
         upstream_ver, upstream_url, *archive = check_upstream(package)
+        print(upstream_url)
         if len(archive) == 1:
             archive = archive[0]
         else:
@@ -255,8 +246,8 @@ def compare_versions(package):
         if splittedname(omv_version) > splittedname(upstream_ver):
             package_item['status'] = 'unknown'
         return package_item
-    except:
-        pass
+#    except:
+#        pass
 
 
 def remove_if_exist(path):
@@ -348,6 +339,48 @@ def abf_build(package):
         return False
 
 
+def qt5_check(upstream_url):
+    split_url = upstream_url.split("/")[:6]
+    project_url = '/'.join(split_url[:5])
+    print(upstream_url)
+    req = requests.get(project_url, headers=headers, allow_redirects=True)
+    version_list = []
+    # http://download.qt.io/official_releases/qt/5.11/
+    true_version_list = []
+    if req.status_code == 404:
+        print('requested url [{}] not found'.format(upstream_url))
+    if req.status_code == 200:
+        try:
+            first_url = re.finditer(
+                'href=[\'"]?([\d.]*\d+)', req.content.decode('utf-8'))
+            for match in first_url:
+                version_list.append(match[1])
+            upstream_max_version = max(
+                [[int(j) for j in i.split(".")] for i in version_list])
+            upstream_version = ".".join([str(i) for i in upstream_max_version])
+            new_url = project_url + '/' + upstream_version
+            print(new_url)
+            req2 = requests.get(new_url, headers=headers, allow_redirects=True)
+            if req2.status_code == 404:
+                print('requested url [{}] not found'.format(new_url))
+            if req2.status_code == 200:
+                try:
+                    pkg_ver = re.finditer(
+                        'href=[\'"]?([\d.]*\d+)', req2.content.decode('utf-8'))
+                    for match in pkg_ver:
+                        true_version_list.append(match[1])
+                    upstream_max_version = max(
+                        [[int(j) for j in i.split(".")] for i in true_version_list])
+                    upstream_version = ".".join(
+                        [str(i) for i in upstream_max_version])
+                    print(upstream_version)
+                    return upstream_version, project_url
+                except:
+                    return
+        except:
+            return
+
+
 def update_spec(package):
     pkg_status = compare_versions(package)
     status = pkg_status['status']
@@ -360,9 +393,9 @@ def update_spec(package):
         new_source0 = None
     output = '/tmp/' + package + '.spec'
     remove_if_exist(output)
-    print('linting version')
     try:
        if lint_version(upstream_version) is False and status == 'outdated':
+           print('linting passed')
            print('update required')
            # find current version
            clone_repo(package, project_version)
@@ -430,6 +463,7 @@ if __name__ == '__main__':
                  package = line.strip()
                  check_version(package)
                  try:
+                     print('update_spec')
                      update_spec(package)
                  except:
                      pass
@@ -441,10 +475,11 @@ if __name__ == '__main__':
             del nvss[:]
             del nvs[:]
             check_version(package)
-            try:
-                update_spec(package)
-            except:
-                pass
+            #try:
+            print('update_spec')
+            update_spec(package)
+            #except:
+            #    pass
 
 #update_spec('python-sqlalchemy')
 #check_upstream('vim')
