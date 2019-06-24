@@ -215,6 +215,8 @@ def check_upstream(package):
         print('upstream archive is [{}]'.format(archive))
         print('=========================================')
         return upstream_version, upstream_url, archive
+    # add perl here
+    # https://fastapi.metacpan.org/release/Class-Spiffy
     else:
         print('any other')
         return any_other(upstream_url, package)
