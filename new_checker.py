@@ -47,8 +47,8 @@ def get_nvs(spec):
 
 
 
-def python_packages(name):
-    url = 'https://pypi.python.org/pypi/{}/json'.format(name)
+def json_request(name, url):
+    # name is package name, i.e. vim
     pypi_json = requests.get(url)
     exit_code = pypi_json.status_code
     if exit_code == 200:
@@ -63,7 +63,8 @@ def check_python_module(package):
         name, omv_version, url, source0 = check_version(package)
         # exclude python-
         split_name = re.split(r'python([\d]?)-', name)[-1]
-        module_request, data = python_packages(split_name)
+        url = 'https://pypi.python.org/pypi/{}/json'.format(split_name)
+        module_request, data = json_request(split_name, url)
         if module_request == 200:
             upstream_version = data['info']['version'][:]
             project_url = data['info']['project_url'][:]
@@ -77,7 +78,7 @@ def check_python_module(package):
             # like pyOpenSSL
             split_name = 'py' + name.split("-")[1]
             # still can return 404
-            module_request, data = python_packages(split_name)
+            module_request, data = json_request(split_name, url)
             upstream_version = data['info']['version'][:]
             project_url = data['info']['project_url'][:]
             download_url = data['urls']
@@ -89,10 +90,29 @@ def check_python_module(package):
     except:
         pass
 
+def repology(package):
+    versions = []
+    www = []
+
+    url = 'https://repology.org/api/v1/project/{}'.format(package)
+    module_request, data = json_request(package, url)
+    match = next(d for d in data if d['status'] == 'newest')
+    print(match['www'])
+    www = match['www']
+    upstream_version = match['version']
+#    upstream_version = list(dict.fromkeys(versions))
+#    print(www)
+#    www = list(dict.fromkeys(www))
+#    print(upstream_version)
+    return upstream_version, www
+
+
+
 def any_other(upstream_url, package):
     split_url = upstream_url.split("/")[:6]
     project_url = '/'.join(split_url[:5])
     req = requests.get(project_url, headers=headers, allow_redirects=True)
+    print(project_url)
     version_list = []
     if req.status_code == 404:
         print('requested url [{}] not found'.format(upstream_url))
@@ -171,6 +191,7 @@ def github_check(upstream_url):
         print(apibase)
         github_json = requests.get(apibase, headers=github_headers)
         data = github_json.json()
+        print(data)
         project_name = (data[0]['name'])
         if 'xf86' in project_url:
             category_match = re.search('[-]([\d.]*\d+)', project_name)
@@ -219,7 +240,7 @@ def check_upstream(package):
     # https://fastapi.metacpan.org/release/Class-Spiffy
     else:
         print('any other')
-        return any_other(upstream_url, package)
+        return repology(package)
 
 
 def compare_versions(package):
