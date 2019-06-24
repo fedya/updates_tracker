@@ -95,15 +95,15 @@ def repology(package):
     www = []
 
     url = 'https://repology.org/api/v1/project/{}'.format(package)
+    print(url)
     module_request, data = json_request(package, url)
-    match = next(d for d in data if d['status'] == 'newest')
-    print(match['www'])
+    match = None
+    for d in data:
+        if d['status'] == 'newest' and 'www' in d:
+            match = d
+            break
     www = match['www']
     upstream_version = match['version']
-#    upstream_version = list(dict.fromkeys(versions))
-#    print(www)
-#    www = list(dict.fromkeys(www))
-#    print(upstream_version)
     return upstream_version, www
 
 
@@ -112,6 +112,9 @@ def any_other(upstream_url, package):
     split_url = upstream_url.split("/")[:6]
     project_url = '/'.join(split_url[:5])
     req = requests.get(project_url, headers=headers, allow_redirects=True)
+    print(project_url)
+    print(project_url)
+    print(project_url)
     print(project_url)
     version_list = []
     if req.status_code == 404:
