@@ -99,12 +99,14 @@ def repology(package):
     module_request, data = json_request(package, url)
     match = None
     for d in data:
-        if d['status'] == 'newest' and 'www' in d:
+        if all (k in d for k in ('status', 'repo')) and d['status'] == 'newest':
             match = d
             break
-    www = match['www']
+    repo = match['repo']
+    print(repo)
+    www = 'https://repology.org'
     upstream_version = match['version']
-    return upstream_version, www
+    return upstream_version, repo
 
 
 
