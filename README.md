@@ -20,15 +20,23 @@ Check [sway](https://github.com/swaywm/sway) version
 ```python
 python new_checker.py --package sway
 [....]
-{'package': 'sway', 'omv_version': '1.1.1', 'upstream_version': '1.1.1', 'project_url': 'https://github.com/SirCmpwn/sway/'}
-
+{
+	'package': 'sway',
+	'omv_version': '1.1.1',
+	'upstream_version': '1.1.1',
+	'project_url': 'https://github.com/SirCmpwn/sway/'
+}
 ```
 or check [vim](https://github.com/vim)
 ```python
 python new_checker.py --package vim
 [....]
-{'package': 'vim', 'omv_version': '8.1.1592', 'upstream_version': '8.1.1592', 'project_url': 'https://github.com/vim/vim/'}
-
+{
+	'package': 'vim',
+	'omv_version': '8.1.1592',
+	'upstream_version': '8.1.1592',
+	'project_url': 'https://github.com/vim/vim/'
+}
 ```
 
 ## How it Works
