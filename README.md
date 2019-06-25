@@ -17,7 +17,7 @@ you need to replace github_token with obtained one.
 
 ## Usage
 Check [sway](https://github.com/swaywm/sway) version
-```python
+```bash
 python new_checker.py --package sway
 [....]
 {
@@ -28,7 +28,7 @@ python new_checker.py --package sway
 }
 ```
 or check [vim](https://github.com/vim)
-```python
+```bash
 python new_checker.py --package vim
 [....]
 {
