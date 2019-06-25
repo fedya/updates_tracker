@@ -1,6 +1,6 @@
-# Foobar
+# OpenMandriva Autoupdater
 
-Foobar is a Python library for dealing with word pluralization.
+A tool to autoupdate packages
 
 ## Installation
 
