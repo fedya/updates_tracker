@@ -436,6 +436,17 @@ def update_spec(package):
                        outfile.write(change_version)
                target_spec = home + '/' + package + '/' + package + '.spec'
                shutil.move(output, target_spec)
+
+           with open(specname) as f:
+               for line in f:
+                   release_pattern = 'Release:\W(.*)'
+                   change_release = re.sub(release_pattern, 'Release:\t' + '1', line)
+                   with open(output, 'a') as outfile:
+                       outfile.write(change_release)
+               target_spec = home + '/' + package + '/' + package + '.spec'
+               shutil.move(output, target_spec)
+
+           # related to python packages
            if new_source0 is not None:
                source_pattern = 'Source0:\W*(.*)'
                with open(specname) as f:
