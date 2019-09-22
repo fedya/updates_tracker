@@ -115,9 +115,6 @@ def any_other(upstream_url, package):
     project_url = '/'.join(split_url[:5])
     req = requests.get(project_url, headers=headers, allow_redirects=True)
     print(project_url)
-    print(project_url)
-    print(project_url)
-    print(project_url)
     version_list = []
     if req.status_code == 404:
         print('requested url [{}] not found'.format(upstream_url))
@@ -222,6 +219,16 @@ def github_check(upstream_url):
         print(upstream_version, project_url)
         return upstream_version, project_url
 
+def kernel_rpi():
+    rpi3_raw = 'https://github.com/raspberrypi/linux/raw/rpi-4.19.y/Makefile'
+    rpi_page = requests.get(rpi3_raw, headers=github_headers)
+    version = re.search('VERSION\s=\s([^"\n]+)', rpi_page.content.decode('utf-8'))
+    patchlevel = re.search('PATCHLEVEL\s=\s([^"\n]+)', rpi_page.content.decode('utf-8'))
+    sublevel = re.search('SUBLEVEL\s=\s([^"\n]+)', rpi_page.content.decode('utf-8'))
+    kernel_version = version.group(1) + '.' +  patchlevel.group(1) + '.' + sublevel.group(1)
+    print(kernel_version)
+    upstream_url = 'https://github.com/raspberrypi/linux/'
+    return kernel_version, upstream_url
 
 def check_upstream(package):
     upstream_name, our_ver, upstream_url, source0 = nvss
@@ -243,6 +250,9 @@ def check_upstream(package):
         return upstream_version, upstream_url, archive
     # add perl here
     # https://fastapi.metacpan.org/release/Class-Spiffy
+    elif package == 'kernel-rpi3':
+         upstream_version, upstream_url = kernel_rpi()
+         return upstream_version, upstream_url
     else:
         print('any other')
         return repology(package)
@@ -427,7 +437,7 @@ def update_spec(package):
            print('update required')
            # find current version
            clone_repo(package, project_version)
-           version_pattern = 'Version:\W*({})'.format(omv_version)
+           version_pattern = 'Version:\w*(.*)'
            specname = home + '/' + package + '/' + package + '.spec'
            with open(specname) as f:
                for line in f:
@@ -456,7 +466,7 @@ def update_spec(package):
                            outfile.write(change_source)
                    target_spec = home + '/' + package + '/' + package + '.spec'
                    shutil.move(output, target_spec)
-           if run_local_builder(package, project_version) is not False:
+           if run_local_builder(package, project_version, omv_version, upstream_version) is not False:
                upload_sources(package)
                git_commit('version autoupdate [{}]'.format(upstream_version), package)
                git_push(package)
@@ -474,13 +484,15 @@ def print_log(message, log):
     print(message)
 
 
-def run_local_builder(package, project_version):
+def run_local_builder(package, project_version, omv_version, upstream_version):
+    if package == 'kernel-rpi3':
+       return True
     try:
         print('run local build with abf tool')
         subprocess.check_call(['spectool', '--get-files', package + '.spec'], cwd = home + '/' + package)
         subprocess.check_call(['abf', 'mock'], cwd = home + '/' + package)
     except subprocess.CalledProcessError as e:
-        print_log('local build [{}] failed'.format(package), 'update.log')
+        print_log('local build [{}] failed, omv_version: {} upstream: {}'.format(package, omv_version, upstream_version), 'update.log')
         print(e)
         sys.exit(1)
 

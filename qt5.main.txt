@@ -1,5 +1,5 @@
-qt5-style-plugins
 qt5-qtbase
+qt5-style-plugins
 qt5-qtdeclarative
 qt5-qttools
 qt5-qtsvg
