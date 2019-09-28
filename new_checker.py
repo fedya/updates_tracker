@@ -42,7 +42,7 @@ def get_nvs(spec):
         print('omv version: [{}]'.format(version))
         print('omv package name: [{}]'.format(name))
     except:
-        print('probablt specfile damaged')
+        print('probably specfile damaged')
         return None
 
 
