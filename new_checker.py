@@ -142,6 +142,7 @@ def any_other(upstream_url, package):
             return upstream_version, project_url
 
 
+# add here https://download.kde.org/stable/frameworks/
 
 
 def check_version(package):
@@ -466,7 +467,7 @@ def update_spec(package):
                            outfile.write(change_source)
                    target_spec = home + '/' + package + '/' + package + '.spec'
                    shutil.move(output, target_spec)
-           if run_local_builder(package, project_version, omv_version, upstream_version) is not False:
+           if run_local_builder(package, project_version, omv_version, upstream_version) is True:
                upload_sources(package)
                git_commit('version autoupdate [{}]'.format(upstream_version), package)
                git_push(package)
@@ -475,13 +476,13 @@ def update_spec(package):
         pass
 
 def print_log(message, log):
+    print(message)
     try:
         logFile = open(log, 'a')
         logFile.write(message + '\n')
         logFile.close()
     except:
         print("Can't write to log file: " + log)
-    print(message)
 
 
 def run_local_builder(package, project_version, omv_version, upstream_version):
@@ -495,6 +496,8 @@ def run_local_builder(package, project_version, omv_version, upstream_version):
         print_log('local build [{}] failed, omv_version: {} upstream: {}'.format(package, omv_version, upstream_version), 'update.log')
         print(e)
         sys.exit(1)
+    print_log('{} update successfull from {} to {}'.format(package, omv_version, upstream_version), 'update.log')
+    return True
 
 #update_spec('vim')
 if __name__ == '__main__':
