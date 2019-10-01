@@ -14,12 +14,15 @@ import argparse
 
 github_headers = {'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.2171.95 Safari/537.36',
                   'Authorization': 'token github_token'}
+
+
 headers = {'User-Agent': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.2171.95 Safari/537.36'}
 
 home = os.environ.get('HOME')
 project_version = 'master'
 nvs = []
-nvss =  []
+nvss = []
+
 
 def get_nvs(spec):
     print('extracting OMV version first')
@@ -41,7 +44,7 @@ def get_nvs(spec):
         # ['vim', '8.1.1524', 'https://github.com/vim/vim/archive', 'https://github.com/vim/vim/archive/v8.1.1524.tar.gz']
         print('omv version: [{}]'.format(version))
         print('omv package name: [{}]'.format(name))
-    except:
+    except rpm.error:
         print('probably specfile damaged')
         return None
 
