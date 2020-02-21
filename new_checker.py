@@ -87,27 +87,41 @@ def check_python_module(package):
             download_url = data['urls']
             for item in download_url:
                 if item['python_version'] == 'source':
-                     archive = item['url']
+                    archive = item['url']
            # print(json.dumps(download_url))
             return upstream_version, project_url, archive
     except:
         pass
 
-def repology(package):
-    versions = []
-    www = []
 
+def check_rust_module(package):
+    try:
+        name, omv_version, url, source0 = check_version(package)
+        # exclude python-
+        split_name = name.split('rust-', 1)
+        url = 'https://crates.io/api/v1/crates/{}'.format(split_name[-1])
+        module_request, data = json_request(split_name, url)
+        if module_request == 200:
+            upstream_version = data['crate']['newest_version'][:]
+            print(upstream_version)
+            return upstream_version
+        if module_request == 404:
+            return upstream_version, url
+    except:
+        pass
+
+
+def repology(package):
     url = 'https://repology.org/api/v1/project/{}'.format(package)
     print(url)
     module_request, data = json_request(package, url)
     match = None
     for d in data:
-        if all (k in d for k in ('status', 'repo')) and d['status'] == 'newest':
+        if all(k in d for k in ('status', 'repo')) and d['status'] == 'newest':
             match = d
             break
     repo = match['repo']
     print(repo)
-    www = 'https://repology.org'
     upstream_version = match['version']
     return upstream_version, repo
 
@@ -252,11 +266,16 @@ def check_upstream(package):
         print('upstream archive is [{}]'.format(archive))
         print('=========================================')
         return upstream_version, upstream_url, archive
+    elif 'rust' in upstream_name:
+        upstream_version = check_rust_module(package)
+        print('upstream version is [{}]'.format(upstream_version))
+        print('=========================================')
+        return upstream_version, upstream_url
     # add perl here
     # https://fastapi.metacpan.org/release/Class-Spiffy
     elif package == 'kernel-rpi3':
-         upstream_version, upstream_url = kernel_rpi()
-         return upstream_version, upstream_url
+        upstream_version, upstream_url = kernel_rpi()
+        return upstream_version, upstream_url
     else:
         print('any other')
         return repology(package)
@@ -524,7 +543,7 @@ if __name__ == '__main__':
                      update_spec(package)
                  except:
                      pass
-                
+
     if args.package is not None:
         packages = [i for i in args.package if i is not None]
         for package in packages:
@@ -539,7 +558,8 @@ if __name__ == '__main__':
             #    pass
 
 #update_spec('python-sqlalchemy')
-#check_upstream('vim')
+#check_rust_module('rust-rand')
+#check_upstream('rust-rand')
 #compare_versions('python-sqlalchemy')
 #compare_versions('python-coverage')
 #compare_versions('vim')
